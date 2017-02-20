@@ -1,0 +1,26 @@
+- Diamonds Exploration by Chris Saden:
+    https://s3.amazonaws.com/content.udacity-data.com/courses/ud651/diamondsExample_2016-05.html
+
+- use of global chunk options in R Markdown: 
+    http://kbroman.org/knitr_knutshell/pages/Rmarkdown.html
+    
+- legends in ggplot2: 
+    http://www.cookbook-r.com/Graphs/Legends_(ggplot2)/
+    
+- customizing plots in ggplot2:
+    http://docs.ggplot2.org/current/theme.html
+    
+- making correlation heatmaps in ggplot2:
+     https://martinsbioblogg.wordpress.com/2013/03/21/using-r-correlation-heatmap-with-ggplot2/
+     
+- making a plot matrix with psych:
+    http://personality-project.org/r/psych/HowTo/factor.pdf
+    
+- color brewer palettes:
+    http://colorbrewer2.org
+
+- creating effective plots:
+    https://docs.google.com/document/d/1-f3wM3mJSkoWxDmPjsyRnWvNgM57YUPloucOIl07l4c/pub
+    
+- subscript and superscript in ggplot labels:
+    http://stackoverflow.com/questions/27445452/superscript-and-subscript-axis-labels-in-ggplot2
