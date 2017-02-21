@@ -1,5 +1,13 @@
-Exploring White Wines
-========================================================
+---
+title: "Exploring White Wines"
+author: "Daniel Evans"
+date: "2/20/2017"
+output: github_document
+  #html_document: default
+  #keep_md: true
+  
+---
+
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
 # Load all of the packages that you end up using
