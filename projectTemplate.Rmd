@@ -1,8 +1,8 @@
 ---
 title: "Exploring White Wines"
 author: "Daniel Evans"
-date: "2/20/2017"
-output: github_document
+date: "2/27/2017"
+#output: github_document
   #html_document: default
   #keep_md: true
   
@@ -68,8 +68,16 @@ table(wines$quality)
 ```
 
 ```{r Univariate_Plots1}
-ggplot(aes(density), data = wines) + 
-    geom_histogram(bins = 100)
+
+# function for creating basic histograms
+basic_histogram <- function(var, data = wines, bins = 100){
+    return(
+        ggplot(aes_string(x = var), data = data) + 
+            geom_histogram(bins = bins)
+    )
+}
+
+basic_histogram('density')
 ```
 
 ```{r echo=F}
@@ -86,42 +94,53 @@ subset(wines,
        density > 1.01)
 ```
 
-```{r Univariate_Plots2, fig.height=3, fig.width=7}
-ggplot(aes(residual.sugar), data = wines) + 
-    geom_histogram(bins = 200)
+Here's what the density distribution looks like with the outliers removed. We will return to these specific outliers in later sections.
 
-ggplot(aes(residual.sugar), data = wines) + 
-    geom_histogram(bins = 200) + 
+```{r Density histogram without outliers}
+basic_histogram('density', data = subset(wines, density < 1.01))
+```
+
+The resultant plot looks slightly right-skewed.
+
+```{r Univariate_Plots2, fig.height=3, fig.width=7}
+basic_histogram('residual.sugar', bins = 150)
+
+basic_histogram('residual.sugar', bins = 150) + 
     scale_x_log10(breaks = c(1,3,4,10,seq(20,60,10)))
 ```
 
 Sugar data seems a bit skewed, so I log-transformed the x-axis, revealing a bimodal distribution with a valley between 3-4 g/dm<sup>3</sup>. So while the high-density outliers have high residual sugar content, the actual shape of the residual sugar distribution differs markedly from that of the density.
 
 ```{r Univariate_Plots3, fig.height=3, fig.width=7}
-hist_set = geom_histogram(bins = 100)
-
-ggplot(aes(pH), data = wines) + hist_set
-ggplot(aes(fixed.acidity), data = wines) + hist_set
-ggplot(aes(volatile.acidity), data = wines) + hist_set + 
-  scale_x_log10()
-ggplot(aes(citric.acid), data = wines) + hist_set
-ggplot(aes(total.sulfur.dioxide), data = wines) + hist_set + 
-  scale_x_sqrt()
-ggplot(aes(free.sulfur.dioxide), data = wines) + hist_set + 
-  scale_x_sqrt()
-ggplot(aes(sulphates), data = wines) + hist_set + 
-  scale_x_log10()
-ggplot(aes(chlorides), data = wines) + hist_set
+basic_histogram('pH')
+basic_histogram('fixed.acidity')
+basic_histogram('volatile.acidity') + scale_x_log10()
+basic_histogram('citric.acid')
+basic_histogram('total.sulfur.dioxide') + scale_x_sqrt()
+basic_histogram('free.sulfur.dioxide') + scale_x_sqrt()
+basic_histogram('sulphates') + scale_x_log10()
+basic_histogram('chlorides')
 ```
 
 All of these chemical properties fall on normal distributions, with the exception of `volatile.acidity` and `sulphates`, which are log-transformed, and `total.sulfur.dioxide` and `free.sulfur.dioxide`, which are square-root-transformed.
 
 ```{r Univariate_Plots4}
-ggplot(aes(alcohol), data = wines) + 
-    geom_histogram(bins = 50)
+basic_histogram('alcohol', bins = 50)
+basic_histogram('alcohol', bins = 75)
+```
 
-ggplot(aes(alcohol), data = wines) + 
-    geom_histogram(bins = 150)
+```{r}
+summary(wines$chlorides)
+
+# 98th percentile for chloride
+chloride_sans_outliers <- quantile(wines$chlorides, c(.98))
+chloride_sans_outliers
+```
+The histogram for `chlorides` has many outliers larger than 0.1. Here's what the distribution for `chlorides` looks like with 98% percent of the data.
+
+```{r chloride distribution}
+basic_histogram('chlorides', 
+                data = subset(wines, chlorides < chloride_sans_outliers))
 ```
 
 ``` {r}
@@ -135,64 +154,64 @@ summary(wines$alcohol)
 
 The `alcohol` content in wines have a slightly right-skewed distribution. Most of the alcohol counts have three significant figures (e.g. 10.3), with decimals ending in the tenths place. This explains the gaps in the distribution.
 
+Now let's divide the `quality` variable into high (`quality > 6`) and low (`quality <= 6`) categories. 
+
+```{r}
+high_low <- if_else(wines$quality > 6, 'high', 'low')
+high_low <- factor(high_low, c('low', 'high'))
+barplot(table(high_low), ylab = 'counts', xlab = 'quality')
+```
+
 ```{r alcohol content in high- and low-quality wines}
 # compare high quality wines against low quality wines
 high_wines <- subset(wines, quality > 6)
 low_wines <- subset(wines, quality <= 6)
 
-ggplot(data = wines, 
-       aes(alcohol)) + 
-  geom_freqpoly(data = high_wines, 
-                aes(alcohol, y=..count../sum(..count..)), 
-                color = '#F79420', bins = 30) + 
-  geom_freqpoly(data = low_wines, 
-                aes(alcohol, y=..count../sum(..count..)), 
-                bins = 30) + 
-  ylab("Normalized counts") + 
-  ggtitle('Alcohol content in high (orange) and low (black) quality wines')
+split_plot <- function(var, data = wines, bins = 30){
+    return(
+        ggplot(data = data, aes_string(x = var)) + 
+            geom_freqpoly(data = high_wines,
+                          aes_string(var, y = '..count../sum(..count..)'),
+                          color = '#F79420', bins = bins) + 
+            geom_freqpoly(data = low_wines,
+                          aes_string(var, y = '..count../sum(..count..)'),
+                          bins = bins) + 
+            ylab("Normalized counts")
+    )
+}
 
+split_plot('alcohol') + 
+    ggtitle('Alcohol content in high (orange) and low (black) quality wines')
 ```
 
-In the above frequency polygon, it looks like there tends to be more alcohol content in high (`quality > 6` in orange) vs low quality (`quality <= 6` in black) wines. Let's try looking at high to low comparisons for other features:
+In the above frequency polygon, it looks like there tends to be more alcohol content in high (`quality > 6` in orange) vs low quality (`quality <= 6` in black) wines. To smooth out the jagged edges caused by binning, let's use a kernel density estimator to plot alcohol distributions for high and low wines.
+
+```{r}
+ggplot(data = wines, aes(alcohol)) + 
+  geom_density(data = high_wines, aes(alcohol, fill = 'high (> 6)'), 
+               color = '#F79420', alpha = 0.5) + 
+  geom_density(data = low_wines, aes(alcohol, fill = 'low (< 6)'),
+               color = '#7FBF7B', alpha = 0.5) + 
+  ggtitle('Density of alcohol content in high and low quality wines') + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Let's try looking at high to low comparisons for other features:
 
 ```{r chlorides & total sulfur dioxide in low and high quality wines}
-ggplot(data = wines, 
-       aes(chlorides)) + 
-  geom_freqpoly(data = high_wines, 
-                aes(chlorides, y=..count../sum(..count..)), 
-                color = '#F79420', bins=100) + 
-  geom_freqpoly(data = low_wines, 
-                aes(chlorides, y=..count../sum(..count..)), 
-                bins = 100) + 
-  xlim(0,0.1) + 
-  ylab("Normalized counts") + 
-  ggtitle('Chlorides in high (orange) and low (black) quality wines')
+split_plot('chlorides', bins = 100) + 
+    coord_cartesian(xlim = c(0,0.1)) + 
+    ggtitle('Chlorides in high (orange) and low (black) quality wines')
 
-ggplot(data = wines, 
-       aes(total.sulfur.dioxide)) + 
-  geom_freqpoly(data = high_wines, 
-                aes(total.sulfur.dioxide, y=..count../sum(..count..)), 
-                color = '#F79420', bins=100) + 
-  geom_freqpoly(data = low_wines, 
-                aes(total.sulfur.dioxide, y=..count../sum(..count..)), 
-                bins = 100) + 
-  ylab("Normalized counts") + 
-  ggtitle('Total sulfur dioxide in high (orange) and low (black) quality wines')
-
+split_plot('total.sulfur.dioxide', bins = 100) + 
+    coord_cartesian(xlim = c(0,300)) + 
+    ggtitle('Total sulfur dioxide in high (orange) and low (black) quality wines')
 ```
 
 ```{r density in low and high quality wines}
-ggplot(data = wines, 
-       aes(density)) + 
-  geom_freqpoly(data = high_wines, 
-                aes(density, y=..count../sum(..count..)), 
-                color = '#F79420', bins=100) + 
-  geom_freqpoly(data = low_wines, 
-                aes(density, y=..count../sum(..count..)), 
-                bins = 100) + 
-  ylab("Normalized counts") + 
-  ggtitle('Density in high (orange) and low (black) quality wines')
-
+split_plot('density', bins = 100) + 
+    coord_cartesian(xlim = c(min(wines$density), 1.01)) + 
+    ggtitle('Density in high (orange) and low (black) quality wines')
 ```
 
 There seems to be no real difference between low and high quality wines with respect to each of the acidic properties of the wine. Let's see what happens when we add up the acidic content of the wines, creating a new feature called `acids`. The units are still in g/dm<sup>3</sup>.
@@ -205,16 +224,8 @@ low_wines <- subset(wines, quality < 6)
 
 summary(wines$acids)
 
-ggplot(data = wines, 
-       aes(acids)) + 
-  geom_freqpoly(data = high_wines, 
-                aes(acids, y=..count../sum(..count..)), 
-                color = '#F79420', bins=100) + 
-  geom_freqpoly(data = low_wines, 
-                aes(acids, y=..count../sum(..count..)), 
-                bins = 100) + 
-  ylab("Normalized counts") + 
-  ggtitle('Total acidic content in high (orange) and low (black) quality wines')
+split_plot('acids', bins = 100) + 
+    ggtitle('Total acidic content in high (orange) and low (black) quality wines')
 
 ```
 
@@ -229,6 +240,7 @@ subset(wines, quality == 9)
 ```
 
 This sample size is much too small to make meaningful generalizations, but these quality 9 wines tend to have low density and above average alcoholic content (with the exception of the first one, which also has high sugar content). Combining this with the above plots of high vs. low quality wines, it seems like high quality wines have low quantities of salts, sulfur, and sugar, and yet still have an above-average alcohol percentage.
+
 
 # Univariate Analysis
 
@@ -281,8 +293,11 @@ round(cor(wines), 2)
 To better illustrate the correlations between features, let's construct a heat map of the most correlated features.
 
 ```{r Heatmap of correlations}
-# find correlations between seven important features
-corrs <- cor(wines[, c(2,4:5,7:9,11:12)])
+# find correlations between seven important features and quality
+variables <- c('volatile.acidity', 'residual.sugar', 'chlorides',
+               'total.sulfur.dioxide', 'density', 'pH', 'alcohol',
+               'quality')
+corrs <- cor(wines[, variables])
 
 ggplot(aes(Var1, Var2, fill = value, label = round(value, 2)), 
        data = melt(corrs)) + 
@@ -305,7 +320,7 @@ The factors that are most correlated to quality are `alcohol` and `density`. Bel
 # integers into ordered factors
 wines$quality_factors <- as.factor(wines$quality)
 
-ggpairs(wines[, c(2,4:5,7:9,11,13)], 
+ggpairs(wines[, c(variables, 'quality_factors')], 
         lower = list(continuous = wrap("points", shape = I('.'))),
         upper = list(combo = wrap("box", outlier.shape = I('.')))) + 
   
@@ -318,44 +333,39 @@ ggpairs(wines[, c(2,4:5,7:9,11,13)],
 Let's take a closer look at some features and how they affect quality.
 
 ```{r Quality vs. relevant features}
-ggplot(data = wines, 
-       aes(quality_factors, alcohol)) + 
-  geom_boxplot() + 
-  stat_summary(fun.y = mean, geom = 'point', shape = 4)
+basic_boxplot <- function(xvar, yvar, data = wines){
+    return(
+        ggplot(data = data,
+               aes_string(x = xvar, y = yvar)) +
+            geom_boxplot() + 
+            stat_summary(fun.y = mean, geom = 'point', shape = 4)
+    )
+}
 
-ggplot(data = wines, 
-       aes(x = quality_factors, y = residual.sugar)) + 
-  geom_boxplot() + 
-  scale_y_log10() + 
-  stat_summary(fun.y = mean, geom = 'point', shape = 4)
+basic_boxplot('quality_factors', 'alcohol')
+basic_boxplot('quality_factors', 'residual.sugar')
+basic_boxplot('quality_factors', 'density')
+basic_boxplot('quality_factors', 'chlorides')
+basic_boxplot('quality_factors', 'total.sulfur.dioxide')
+basic_boxplot('quality_factors', 'pH')
+```
 
-ggplot(data = wines, 
-       aes(x = quality_factors, y = density)) + 
-  geom_boxplot() + 
-  stat_summary(fun.y = mean, geom = 'point', shape = 4)
+The boxplots for `residual.sugar`, `density`, and `chlorides` have large outliers, so let's see what their distributions look like when those outliers are removed.
 
-ggplot(data = wines, 
-       aes(x = quality_factors, y = chlorides)) + 
-  geom_boxplot() + 
-  stat_summary(fun.y = mean, geom = 'point', shape = 4)
-
-ggplot(data = wines,
-       aes(x = quality_factors, y = total.sulfur.dioxide)) + 
-  geom_boxplot() + 
-  scale_y_sqrt() + 
-  stat_summary(fun.y = mean, geom = 'point', shape = 4)
-
-ggplot(data = wines, 
-       aes(x = quality_factors, y = pH)) + 
-  geom_boxplot() + 
-  stat_summary(fun.y = mean, geom = 'point', shape = 4)
+```{r}
+basic_boxplot('quality_factors', 'residual.sugar',
+              data = subset(wines, residual.sugar < 25))
+basic_boxplot('quality_factors', 'density',
+              data = subset(wines, density < 1.01))
+basic_boxplot('quality_factors', 'chlorides',
+              data = subset(wines, chlorides < 0.1))
 ```
 
 With the exception of `alcohol` and `pH`, for wines rated 5 or higher, a smaller quantity of the feature involved will produce a better quality wine, but only weakly.
 
 First looking at `alcohol`, we see that the average alcohol percentage increases for wines rated 5 or better. There are two noticable outliers for quality 8 and 9 wines though, having very low alcohol content with respect to the average of their grade.
 
-As for `density`, there's a negative relationship, as the average density tend to go downward with increasing quality. There are three large outliers for wines rated 6. As we've seen above, this is due to a high sugar level in those particular wines. Let's check this by plotting all 6-rated wines with densities greater than 1 g/cm<sup>3</sup>.
+As for `density`, there's a negative relationship, as the average density tends to go downward with increasing quality. There are three large outliers for wines rated 6. As we've seen above, this is due to a high sugar level in those particular wines. Let's check these outliers by plotting the densities of all 6-rated wines with densities greater than 1 g/cm<sup>3</sup> against their sugar content.
 
 ```{r Quality 6 wines with densities greater than 1}
 ggplot(subset(wines, quality == 6 & density > 1.), 
@@ -550,7 +560,7 @@ ggplot(data = wines, aes(alcohol)) +
 ```
 
 ### Description One
-This density plot of alcohol distributions for low and high quality wines shows that highly rated wines tend to have more alcohol than low-rated wines.
+This kernel density plot of alcohol distributions for low and high quality wines shows that highly rated wines tend to have more alcohol than low-rated wines.
 
 ### Plot Two
 ```{r echo=FALSE, Plot_Two}
@@ -599,6 +609,6 @@ Each rating forms a layer in the scatterplot, with the highest quality wines (in
 
 I explored a dataset of around 5000 white wines to help answer the question: "What chemical and physical properties of white wines determine their quality?" There was a total of 12 features to explore, including the quality rating. I first examined each of them individually, then pursued some further questions generated by this initial examination, eventually observing interactions over multiple variables.
 
-At first I looked at distributions of certain physical and chemical quantities like density, pH, sugar content and alcohol content. Then I found that if I were to examine distributions by rating, I could see what made high quality wines different from low quality wines. I discovered such differences with the `density` and `alcohol` variables most notably. All the while I checked inter-feature correlations as a guide as to which features contribute to affecting these variables the most. Observing the `density` distribution as a function of quality rating led me to discover three major outliers with very high densities. This tipped me off to surmise that the sugar content (which also had a few major outliers) has a large impact on density, which I confirmed by making a density vs. sugar plot and noticing a strong linear trend. Alcohol content should also affect density, so I examined their relationship as well. One surprising yet unexplained observation I found is that the pH also affects density but only in terms of its variability, because adding pH into the density model improved the R<sup>2</sup> score more than any other quantity except sugar and alcohol. 
+At first I looked at distributions of certain physical and chemical quantities like density, pH, sugar content and alcohol content. Then I found that if I were to examine distributions by rating, I could see what made high quality wines different from low quality wines. I discovered such differences with the `density` and `alcohol` variables most notably. All the while I checked inter-feature correlations as a guide as to which features contribute to affecting these variables the most. Observing the `density` distribution as a function of quality rating led me to discover three major outliers with very high densities. This tipped me off to surmise that the sugar content (which also had a few major outliers) has a large impact on density, which I confirmed by making a density vs. sugar plot and noticing a strong linear trend. Alcohol content should also affect density, so I examined that relationship as well. One surprising yet unexplained observation I found is that the pH also affects density but only in terms of its variability, because adding pH into the density model improved the R<sup>2</sup> score more than any other quantity except sugar and alcohol. 
 
 I have yet to make any accurate models for the quality of wines based on factors like `density` or `alcohol`. While high quality wines have low densities, low sugar, and a high alcohol percentage, there are plenty of middling and low quality wines with those attributes as well. It was difficult for me to find anything that distinguishes a low-rated (3-4) wine from a middle-rated wine (5-6). In future work, I would try to incorporate more of the other seemingly less correlated features into the analysis, since I discovered that high quality wines tend to have low quantities of chlorides and sulfur dioxide, while low quality wines have high fixed acidities. How these features affect wine quality are more subtle and would probably require a bit more knowledge as to how they change the taste, color and smell of wines, which are major factors in judging wine quality.

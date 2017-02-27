@@ -1,7 +1,7 @@
 Exploring White Wines
 ================
 Daniel Evans
-2/20/2017
+2/27/2017
 
 Univariate Plots Section
 ========================
@@ -76,6 +76,12 @@ There are three major outliers, all corresponding to wines with high sugar conte
     ## 1664 1.01030           31.6       6
     ## 2782 1.03898           65.8       6
 
+Here's what the density distribution looks like with the outliers removed. We will return to these specific outliers in later sections.
+
+![](projectTemplate_files/figure-markdown_github/Density%20histogram%20without%20outliers-1.png)
+
+The resultant plot looks slightly right-skewed.
+
 ![](projectTemplate_files/figure-markdown_github/Univariate_Plots2-1.png)![](projectTemplate_files/figure-markdown_github/Univariate_Plots2-2.png)
 
 Sugar data seems a bit skewed, so I log-transformed the x-axis, revealing a bimodal distribution with a valley between 3-4 g/dm<sup>3</sup>. So while the high-density outliers have high residual sugar content, the actual shape of the residual sugar distribution differs markedly from that of the density.
@@ -85,6 +91,16 @@ Sugar data seems a bit skewed, so I log-transformed the x-axis, revealing a bimo
 All of these chemical properties fall on normal distributions, with the exception of `volatile.acidity` and `sulphates`, which are log-transformed, and `total.sulfur.dioxide` and `free.sulfur.dioxide`, which are square-root-transformed.
 
 ![](projectTemplate_files/figure-markdown_github/Univariate_Plots4-1.png)![](projectTemplate_files/figure-markdown_github/Univariate_Plots4-2.png)
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ## 0.00900 0.03600 0.04300 0.04577 0.05000 0.34600
+
+    ##   98% 
+    ## 0.117
+
+The histogram for `chlorides` has many outliers larger than 0.1. Here's what the distribution for `chlorides` looks like with 98% percent of the data.
+
+![](projectTemplate_files/figure-markdown_github/chloride%20distribution-1.png)
 
     ## 
     ## 10.0333333333333             10.1 10.1333333333333            10.15 
@@ -103,9 +119,17 @@ All of these chemical properties fall on normal distributions, with the exceptio
 
 The `alcohol` content in wines have a slightly right-skewed distribution. Most of the alcohol counts have three significant figures (e.g. 10.3), with decimals ending in the tenths place. This explains the gaps in the distribution.
 
+Now let's divide the `quality` variable into high (`quality > 6`) and low (`quality <= 6`) categories.
+
+![](projectTemplate_files/figure-markdown_github/unnamed-chunk-6-1.png)
+
 ![](projectTemplate_files/figure-markdown_github/alcohol%20content%20in%20high-%20and%20low-quality%20wines-1.png)
 
-In the above frequency polygon, it looks like there tends to be more alcohol content in high (`quality > 6` in orange) vs low quality (`quality <= 6` in black) wines. Let's try looking at high to low comparisons for other features:
+In the above frequency polygon, it looks like there tends to be more alcohol content in high (`quality > 6` in orange) vs low quality (`quality <= 6` in black) wines. To smooth out the jagged edges caused by binning, let's use a kernel density estimator to plot alcohol distributions for high and low wines.
+
+![](projectTemplate_files/figure-markdown_github/unnamed-chunk-7-1.png)
+
+Let's try looking at high to low comparisons for other features:
 
 ![](projectTemplate_files/figure-markdown_github/chlorides%20&%20total%20sulfur%20dioxide%20in%20low%20and%20high%20quality%20wines-1.png)![](projectTemplate_files/figure-markdown_github/chlorides%20&%20total%20sulfur%20dioxide%20in%20low%20and%20high%20quality%20wines-2.png)
 
@@ -259,11 +283,15 @@ Let's take a closer look at some features and how they affect quality.
 
 ![](projectTemplate_files/figure-markdown_github/Quality%20vs.%20relevant%20features-1.png)![](projectTemplate_files/figure-markdown_github/Quality%20vs.%20relevant%20features-2.png)![](projectTemplate_files/figure-markdown_github/Quality%20vs.%20relevant%20features-3.png)![](projectTemplate_files/figure-markdown_github/Quality%20vs.%20relevant%20features-4.png)![](projectTemplate_files/figure-markdown_github/Quality%20vs.%20relevant%20features-5.png)![](projectTemplate_files/figure-markdown_github/Quality%20vs.%20relevant%20features-6.png)
 
+The boxplots for `residual.sugar`, `density`, and `chlorides` have large outliers, so let's see what their distributions look like when those outliers are removed.
+
+![](projectTemplate_files/figure-markdown_github/unnamed-chunk-8-1.png)![](projectTemplate_files/figure-markdown_github/unnamed-chunk-8-2.png)![](projectTemplate_files/figure-markdown_github/unnamed-chunk-8-3.png)
+
 With the exception of `alcohol` and `pH`, for wines rated 5 or higher, a smaller quantity of the feature involved will produce a better quality wine, but only weakly.
 
 First looking at `alcohol`, we see that the average alcohol percentage increases for wines rated 5 or better. There are two noticable outliers for quality 8 and 9 wines though, having very low alcohol content with respect to the average of their grade.
 
-As for `density`, there's a negative relationship, as the average density tend to go downward with increasing quality. There are three large outliers for wines rated 6. As we've seen above, this is due to a high sugar level in those particular wines. Let's check this by plotting all 6-rated wines with densities greater than 1 g/cm<sup>3</sup>.
+As for `density`, there's a negative relationship, as the average density tends to go downward with increasing quality. There are three large outliers for wines rated 6. As we've seen above, this is due to a high sugar level in those particular wines. Let's check these outliers by plotting the densities of all 6-rated wines with densities greater than 1 g/cm<sup>3</sup> against their sugar content.
 
 ![](projectTemplate_files/figure-markdown_github/Quality%206%20wines%20with%20densities%20greater%20than%201-1.png)
 
@@ -382,7 +410,7 @@ Even with outliers, the fit is remarkably good, with an R<sup>2</sup> of at leas
 
 Here are the density plots with diverging color palettes encoding wine quality.
 
-![](projectTemplate_files/figure-markdown_github/unnamed-chunk-5-1.png)![](projectTemplate_files/figure-markdown_github/unnamed-chunk-5-2.png)
+![](projectTemplate_files/figure-markdown_github/unnamed-chunk-9-1.png)![](projectTemplate_files/figure-markdown_github/unnamed-chunk-9-2.png)
 
 Multivariate Analysis
 =====================
@@ -412,7 +440,7 @@ Final Plots and Summary
 
 ### Description One
 
-This density plot of alcohol distributions for low and high quality wines shows that highly rated wines tend to have more alcohol than low-rated wines.
+This kernel density plot of alcohol distributions for low and high quality wines shows that highly rated wines tend to have more alcohol than low-rated wines.
 
 ### Plot Two
 
@@ -437,6 +465,6 @@ Reflection
 
 I explored a dataset of around 5000 white wines to help answer the question: "What chemical and physical properties of white wines determine their quality?" There was a total of 12 features to explore, including the quality rating. I first examined each of them individually, then pursued some further questions generated by this initial examination, eventually observing interactions over multiple variables.
 
-At first I looked at distributions of certain physical and chemical quantities like density, pH, sugar content and alcohol content. Then I found that if I were to examine distributions by rating, I could see what made high quality wines different from low quality wines. I discovered such differences with the `density` and `alcohol` variables most notably. All the while I checked inter-feature correlations as a guide as to which features contribute to affecting these variables the most. Observing the `density` distribution as a function of quality rating led me to discover three major outliers with very high densities. This tipped me off to surmise that the sugar content (which also had a few major outliers) has a large impact on density, which I confirmed by making a density vs. sugar plot and noticing a strong linear trend. Alcohol content should also affect density, so I examined their relationship as well. One surprising yet unexplained observation I found is that the pH also affects density but only in terms of its variability, because adding pH into the density model improved the R<sup>2</sup> score more than any other quantity except sugar and alcohol.
+At first I looked at distributions of certain physical and chemical quantities like density, pH, sugar content and alcohol content. Then I found that if I were to examine distributions by rating, I could see what made high quality wines different from low quality wines. I discovered such differences with the `density` and `alcohol` variables most notably. All the while I checked inter-feature correlations as a guide as to which features contribute to affecting these variables the most. Observing the `density` distribution as a function of quality rating led me to discover three major outliers with very high densities. This tipped me off to surmise that the sugar content (which also had a few major outliers) has a large impact on density, which I confirmed by making a density vs. sugar plot and noticing a strong linear trend. Alcohol content should also affect density, so I examined that relationship as well. One surprising yet unexplained observation I found is that the pH also affects density but only in terms of its variability, because adding pH into the density model improved the R<sup>2</sup> score more than any other quantity except sugar and alcohol.
 
 I have yet to make any accurate models for the quality of wines based on factors like `density` or `alcohol`. While high quality wines have low densities, low sugar, and a high alcohol percentage, there are plenty of middling and low quality wines with those attributes as well. It was difficult for me to find anything that distinguishes a low-rated (3-4) wine from a middle-rated wine (5-6). In future work, I would try to incorporate more of the other seemingly less correlated features into the analysis, since I discovered that high quality wines tend to have low quantities of chlorides and sulfur dioxide, while low quality wines have high fixed acidities. How these features affect wine quality are more subtle and would probably require a bit more knowledge as to how they change the taste, color and smell of wines, which are major factors in judging wine quality.
