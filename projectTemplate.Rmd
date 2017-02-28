@@ -2,7 +2,7 @@
 title: "Exploring White Wines"
 author: "Daniel Evans"
 date: "2/27/2017"
-#output: github_document
+output: github_document
   #html_document: default
   #keep_md: true
   
