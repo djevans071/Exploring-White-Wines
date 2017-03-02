@@ -90,7 +90,7 @@ Sugar data seems a bit skewed, so I log-transformed the x-axis, revealing a bimo
 
 All of these chemical properties fall on normal distributions, with the exception of `volatile.acidity` and `sulphates`, which are log-transformed, and `total.sulfur.dioxide` and `free.sulfur.dioxide`, which are square-root-transformed.
 
-![](projectTemplate_files/figure-markdown_github/Univariate_Plots4-1.png)![](projectTemplate_files/figure-markdown_github/Univariate_Plots4-2.png)
+![](projectTemplate_files/figure-markdown_github/Univariate_Plots4-1.png)
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     ## 0.00900 0.03600 0.04300 0.04577 0.05000 0.34600
@@ -123,28 +123,7 @@ Now let's divide the `quality` variable into high (`quality > 6`) and low (`qual
 
 ![](projectTemplate_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
-![](projectTemplate_files/figure-markdown_github/alcohol%20content%20in%20high-%20and%20low-quality%20wines-1.png)
-
-In the above frequency polygon, it looks like there tends to be more alcohol content in high (`quality > 6` in orange) vs low quality (`quality <= 6` in black) wines. To smooth out the jagged edges caused by binning, let's use a kernel density estimator to plot alcohol distributions for high and low wines.
-
-![](projectTemplate_files/figure-markdown_github/unnamed-chunk-7-1.png)
-
-Let's try looking at high to low comparisons for other features:
-
-![](projectTemplate_files/figure-markdown_github/chlorides%20&%20total%20sulfur%20dioxide%20in%20low%20and%20high%20quality%20wines-1.png)![](projectTemplate_files/figure-markdown_github/chlorides%20&%20total%20sulfur%20dioxide%20in%20low%20and%20high%20quality%20wines-2.png)
-
-![](projectTemplate_files/figure-markdown_github/density%20in%20low%20and%20high%20quality%20wines-1.png)
-
-There seems to be no real difference between low and high quality wines with respect to each of the acidic properties of the wine. Let's see what happens when we add up the acidic content of the wines, creating a new feature called `acids`. The units are still in g/dm<sup>3</sup>.
-
-    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##   4.130   6.890   7.405   7.467   7.960  14.960
-
-![](projectTemplate_files/figure-markdown_github/Total%20acids%20in%20low%20and%20high%20quality%20wines-1.png)
-
-Alas, there seems to be no meaningful difference.
-
-High-quality wines tend to have lower density than low-quality wines, which suggests that a combination of high alcohol content and low residual sugar wines will have lower density and will more likely be a higher quality wine.
+In the next section, we will explore how wine features differ according to this quality distinction.
 
 There are only 5 white wines that have a quality rating of 9. Let's take a look at their features:
 
@@ -160,12 +139,12 @@ There are only 5 white wines that have a quality rating of 9. Let's take a look 
     ## 828                   27                  139 0.99055 3.28      0.48
     ## 877                   57                  119 0.98980 3.28      0.36
     ## 1606                  31                  113 0.99030 3.37      0.42
-    ##      alcohol quality acids
-    ## 775     10.4       9  9.82
-    ## 821     12.4       9  7.25
-    ## 828     12.5       9  8.00
-    ## 877     12.7       9  7.60
-    ## 1606    12.9       9  7.85
+    ##      alcohol quality high_low
+    ## 775     10.4       9     high
+    ## 821     12.4       9     high
+    ## 828     12.5       9     high
+    ## 877     12.7       9     high
+    ## 1606    12.9       9     high
 
 This sample size is much too small to make meaningful generalizations, but these quality 9 wines tend to have low density and above average alcoholic content (with the exception of the first one, which also has high sugar content). Combining this with the above plots of high vs. low quality wines, it seems like high quality wines have low quantities of salts, sulfur, and sugar, and yet still have an above-average alcohol percentage.
 
@@ -209,7 +188,7 @@ Other features where we see some divergence between low and high quality wines a
 
 ### Did you create any new variables from existing variables in the dataset?
 
-I've tried consolidating the `fixed.acidity`, `volatile.acidity`, and `citric.acid` into a new feature called `acids`, but so far I haven't seen any many differences between high and low quality wines with this feature.
+I've tried consolidating the `fixed.acidity`, `volatile.acidity`, and `citric.acid` into a new feature called `acids`. I've also created the `high_low` variable that splits the `quality` feature into "high" (`quality > 6`) and "low" (`quality <= 6`) categories. We will explore wine features against this variable in the next section.
 
 ### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
 
@@ -217,6 +196,31 @@ Although I had to log-transform or square root transform some of the plots, all 
 
 Bivariate Plots Section
 =======================
+
+First, let us use the quality division from the previous section to explore how high and low quality wines differ.
+
+![](projectTemplate_files/figure-markdown_github/alcohol%20content%20in%20high-%20and%20low-quality%20wines-1.png)
+
+In the above frequency polygon, it looks like there tends to be more alcohol content in high (`quality > 6` in orange) vs low quality (`quality <= 6` in black) wines. To smooth out the jagged edges caused by binning, let's use a kernel density estimator to plot alcohol distributions for high and low wines.
+
+![](projectTemplate_files/figure-markdown_github/unnamed-chunk-7-1.png)
+
+Let's try looking at high to low comparisons for other features:
+
+![](projectTemplate_files/figure-markdown_github/chlorides%20&%20total%20sulfur%20dioxide%20in%20low%20and%20high%20quality%20wines-1.png)![](projectTemplate_files/figure-markdown_github/chlorides%20&%20total%20sulfur%20dioxide%20in%20low%20and%20high%20quality%20wines-2.png)
+
+![](projectTemplate_files/figure-markdown_github/density%20in%20low%20and%20high%20quality%20wines-1.png)
+
+There seems to be no real difference between low and high quality wines with respect to each of the acidic properties of the wine. Let's see what happens when we add up the acidic content of the wines, creating a new feature called `acids`. The units are still in g/dm<sup>3</sup>.
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##   4.130   6.890   7.405   7.467   7.960  14.960
+
+![](projectTemplate_files/figure-markdown_github/Total%20acids%20in%20low%20and%20high%20quality%20wines-1.png)
+
+Alas, there seems to be no meaningful difference.
+
+High-quality wines tend to have lower density than low-quality wines, which suggests that a combination of high alcohol content and low residual sugar wines will have lower density and will more likely be a higher quality wine.
 
     ##                      fixed.acidity volatile.acidity citric.acid
     ## fixed.acidity                 1.00            -0.02        0.29
@@ -320,7 +324,33 @@ The trend is quite linear. This is to be expected because we've already seen tha
     ## Multiple R-squared:  0.7039, Adjusted R-squared:  0.7038 
     ## F-statistic: 1.164e+04 on 1 and 4896 DF,  p-value: < 2.2e-16
 
-Residual sugar alone accounts for over 70% of the variance in the density. Similarly, alcohol content and total sulfur dioxide also affect the density of wines.
+![](projectTemplate_files/figure-markdown_github/unnamed-chunk-9-1.png)
+
+Residual sugar alone accounts for over 70% of the variance in the density. Similarly, alcohol content and total sulfur dioxide also affect the density of wines. The Cook's distance plot shows that the outlier having the greatest influence on the model is wine 2782, which has a residual sugar content of 65.8 g/dm<sup>3</sup>. This wine also has the largest residual error.
+
+    ## 
+    ## Call:
+    ## lm(formula = density ~ residual.sugar, data = subset(wines, residual.sugar < 
+    ##     60))
+    ## 
+    ## Residuals:
+    ##        Min         1Q     Median         3Q        Max 
+    ## -0.0055605 -0.0011104  0.0001933  0.0011568  0.0060178 
+    ## 
+    ## Coefficients:
+    ##                 Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)    9.909e-01  3.735e-05 26534.1   <2e-16 ***
+    ## residual.sugar 4.872e-04  4.607e-06   105.7   <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.001612 on 4895 degrees of freedom
+    ## Multiple R-squared:  0.6955, Adjusted R-squared:  0.6954 
+    ## F-statistic: 1.118e+04 on 1 and 4895 DF,  p-value: < 2.2e-16
+
+![](projectTemplate_files/figure-markdown_github/linear%20model%20of%20density%20wrt%20sugar%20without%20outliers-1.png)
+
+Strangely, removing this outlier, while it improves the residual error somewhat, actually reduces the R<sup>2</sup> score.
 
 ![](projectTemplate_files/figure-markdown_github/Features%20affecting%20density%20linearly-1.png)![](projectTemplate_files/figure-markdown_github/Features%20affecting%20density%20linearly-2.png)
 
@@ -410,7 +440,7 @@ Even with outliers, the fit is remarkably good, with an R<sup>2</sup> of at leas
 
 Here are the density plots with diverging color palettes encoding wine quality.
 
-![](projectTemplate_files/figure-markdown_github/unnamed-chunk-9-1.png)![](projectTemplate_files/figure-markdown_github/unnamed-chunk-9-2.png)
+![](projectTemplate_files/figure-markdown_github/unnamed-chunk-10-1.png)![](projectTemplate_files/figure-markdown_github/unnamed-chunk-10-2.png)
 
 Multivariate Analysis
 =====================
@@ -440,7 +470,7 @@ Final Plots and Summary
 
 ### Description One
 
-This kernel density plot of alcohol distributions for low and high quality wines shows that highly rated wines tend to have more alcohol than low-rated wines.
+This kernel density plot of alcohol distributions for low and high quality wines shows that highly rated wines tend to have more alcohol than low-rated wines. The mean/median alcohol percentages for high and low quality wines are 11.42%/11.5% and 10.27%/10% respectively. The averages are 11.42% and 10.27%.
 
 ### Plot Two
 
@@ -448,7 +478,7 @@ This kernel density plot of alcohol distributions for low and high quality wines
 
 ### Description Two
 
-The highest rated wines (7-9) have the lowest densities. The spread of density data is wide for middle-rated wines (5-6), with large outliers (not pictured) for 6-rated wines due to abnormally high sugar content.
+Density and quality are fairly correlated, with a coefficient of -0.31. The highest rated wines (7-9) have the lowest densities. The spread of density data is wide for middle-rated wines (5-6), with large outliers (not pictured) for 6-rated wines due to abnormally high sugar content.
 
 ### Plot Three
 

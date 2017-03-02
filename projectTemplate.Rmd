@@ -105,7 +105,7 @@ The resultant plot looks slightly right-skewed.
 ```{r Univariate_Plots2, fig.height=3, fig.width=7}
 basic_histogram('residual.sugar', bins = 150)
 
-basic_histogram('residual.sugar', bins = 150) + 
+basic_histogram('residual.sugar', bins = 50) + 
     scale_x_log10(breaks = c(1,3,4,10,seq(20,60,10)))
 ```
 
@@ -114,11 +114,11 @@ Sugar data seems a bit skewed, so I log-transformed the x-axis, revealing a bimo
 ```{r Univariate_Plots3, fig.height=3, fig.width=7}
 basic_histogram('pH')
 basic_histogram('fixed.acidity')
-basic_histogram('volatile.acidity') + scale_x_log10()
+basic_histogram('volatile.acidity', bins = 60) + scale_x_log10()
 basic_histogram('citric.acid')
 basic_histogram('total.sulfur.dioxide') + scale_x_sqrt()
 basic_histogram('free.sulfur.dioxide') + scale_x_sqrt()
-basic_histogram('sulphates') + scale_x_log10()
+basic_histogram('sulphates', bins = 60) + scale_x_log10()
 basic_histogram('chlorides')
 ```
 
@@ -126,7 +126,6 @@ All of these chemical properties fall on normal distributions, with the exceptio
 
 ```{r Univariate_Plots4}
 basic_histogram('alcohol', bins = 50)
-basic_histogram('alcohol', bins = 75)
 ```
 
 ```{r}
@@ -136,6 +135,7 @@ summary(wines$chlorides)
 chloride_sans_outliers <- quantile(wines$chlorides, c(.98))
 chloride_sans_outliers
 ```
+
 The histogram for `chlorides` has many outliers larger than 0.1. Here's what the distribution for `chlorides` looks like with 98% percent of the data.
 
 ```{r chloride distribution}
@@ -157,10 +157,68 @@ The `alcohol` content in wines have a slightly right-skewed distribution. Most o
 Now let's divide the `quality` variable into high (`quality > 6`) and low (`quality <= 6`) categories. 
 
 ```{r}
-high_low <- if_else(wines$quality > 6, 'high', 'low')
-high_low <- factor(high_low, c('low', 'high'))
-barplot(table(high_low), ylab = 'counts', xlab = 'quality')
+wines$high_low <- if_else(wines$quality > 6, 'high', 'low')
+wines$high_low <- factor(wines$high_low, c('low', 'high'))
+#barplot(table(high_low), ylab = 'counts', xlab = 'quality')
+ggplot(data = wines, aes(high_low)) + 
+  geom_bar()
 ```
+
+In the next section, we will explore how wine features differ according to this quality distinction.
+
+There are only 5 white wines that have a quality rating of 9. Let's take a look at their features:
+
+```{r Quality 9 wines}
+subset(wines, quality == 9)
+```
+
+This sample size is much too small to make meaningful generalizations, but these quality 9 wines tend to have low density and above average alcoholic content (with the exception of the first one, which also has high sugar content). Combining this with the above plots of high vs. low quality wines, it seems like high quality wines have low quantities of salts, sulfur, and sugar, and yet still have an above-average alcohol percentage.
+
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+There are 4,898 white wines in the dataset with 12 features:
+
+ 1. `fixed.acidity`: fixed acidity (tartaric acid content) in g/dm<sup>3</sup>
+ 2. `volatile.acidity`: volatile acidity (acetic acid content) in g/dm<sup>3</sup>
+ 3. `citric.acid`: citric acid content ("freshness") in g/dm<sup>3</sup>
+ 4. `residual.sugar`: residual sugar content ("sweetness") in g/dm<sup>3</sup>
+ 5. `chlorides`: chloride content (salts) in g/dm<sup>3</sup>
+ 6. `free.sulfur.dioxide`: free sulfur dioxide content (prevents microbial growth and oxidation) in mg/dm<sup>3</sup>
+ 7. `total.sulfur.dioxide`: total sulfur dioxide content in mg/dm<sup>3</sup>
+ 8. `density`: density (g/cm<sup>3</sup>)
+ 9. `pH`: pH (0 = very acidic ----> 14 = very basic)
+ 10. `sulphates`: sulphate content (K<sub>2</sub>SO<sub>4</sub>) in g/dm<sup>3</sup>
+ 11. `alcohol`: percent alcohol
+ 12. `quality`: quality (0 = bad ----> 10 = good)
+
+With the exception of `quality`, each of these features are floating-point numerical values. The `quality` variable is an integer quantity, but for our purposes it may be converted to an ordered factor variable as there are only 7 possible values for `quality` in the data (3 through 9).
+
+Stray observations:
+
+ - Almost half (2,198) of white wines have a quality rating of 6.
+ - Only 5 wines have the maximum quality rating of 9 in this dataset.
+ - 98% percent of white wines are less dense than water (water has a density of 1 g/cm<sup>3</sup>.
+ - The average density is 0.994 g/cm<sup>3</sup>
+ - The average pH is 3.188 (for reference, the pH of pure distilled water is 7.0)
+
+### What is/are the main feature(s) of interest in your dataset?
+The main feature of interest is `quality`. Many of the other features contribute to either the pH or density of a given wine. Therefore it would be good to see how `pH` and `density` affect the quality.
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+Other features where we see some divergence between low and high quality wines are `chlorides`, `total.sulfur.dioxide`, and `alcohol`, alongside the more general `pH` and `density` features.
+
+### Did you create any new variables from existing variables in the dataset?
+I've tried consolidating the `fixed.acidity`, `volatile.acidity`, and `citric.acid` into a new feature called `acids`. I've also created the `high_low` variable that splits the `quality` feature into "high" (`quality > 6`) and "low" (`quality <= 6`) categories. We will explore wine features against this variable in the next section.
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+Although I had to log-transform or square root transform some of the plots, all except the `residual.sugar` and `alcohol` plots tend to look like normal distributions. The distribution of sugars appears bi-modal, perhaps even tri-modal, with a large peak at 1.5 g/dm<sup>3</sup> and two smaller peaks straddling the 10 g/dm<sup>3</sup> point. The histogram for alcohol content is right-skewed, with half of wines containing less than 10.4% alcohol. However, wines with quality rating greater than 6 have an alcohol distribution that is left-skewed, with half of wines containing more than 11.5% alcohol.
+
+
+# Bivariate Plots Section
+
+First, let us use the quality division from the previous section to explore how high and low quality wines differ.
 
 ```{r alcohol content in high- and low-quality wines}
 # compare high quality wines against low quality wines
@@ -233,61 +291,12 @@ Alas, there seems to be no meaningful difference.
 
 High-quality wines tend to have lower density than low-quality wines, which suggests that a combination of high alcohol content and low residual sugar wines will have lower density and will more likely be a higher quality wine.
 
-There are only 5 white wines that have a quality rating of 9. Let's take a look at their features:
 
-```{r Quality 9 wines}
-subset(wines, quality == 9)
-```
-
-This sample size is much too small to make meaningful generalizations, but these quality 9 wines tend to have low density and above average alcoholic content (with the exception of the first one, which also has high sugar content). Combining this with the above plots of high vs. low quality wines, it seems like high quality wines have low quantities of salts, sulfur, and sugar, and yet still have an above-average alcohol percentage.
-
-
-# Univariate Analysis
-
-### What is the structure of your dataset?
-There are 4,898 white wines in the dataset with 12 features:
-
- 1. `fixed.acidity`: fixed acidity (tartaric acid content) in g/dm<sup>3</sup>
- 2. `volatile.acidity`: volatile acidity (acetic acid content) in g/dm<sup>3</sup>
- 3. `citric.acid`: citric acid content ("freshness") in g/dm<sup>3</sup>
- 4. `residual.sugar`: residual sugar content ("sweetness") in g/dm<sup>3</sup>
- 5. `chlorides`: chloride content (salts) in g/dm<sup>3</sup>
- 6. `free.sulfur.dioxide`: free sulfur dioxide content (prevents microbial growth and oxidation) in mg/dm<sup>3</sup>
- 7. `total.sulfur.dioxide`: total sulfur dioxide content in mg/dm<sup>3</sup>
- 8. `density`: density (g/cm<sup>3</sup>)
- 9. `pH`: pH (0 = very acidic ----> 14 = very basic)
- 10. `sulphates`: sulphate content (K<sub>2</sub>SO<sub>4</sub>) in g/dm<sup>3</sup>
- 11. `alcohol`: percent alcohol
- 12. `quality`: quality (0 = bad ----> 10 = good)
-
-With the exception of `quality`, each of these features are floating-point numerical values. The `quality` variable is an integer quantity, but for our purposes it may be converted to an ordered factor variable as there are only 7 possible values for `quality` in the data (3 through 9).
-
-Stray observations:
-
- - Almost half (2,198) of white wines have a quality rating of 6.
- - Only 5 wines have the maximum quality rating of 9 in this dataset.
- - 98% percent of white wines are less dense than water (water has a density of 1 g/cm<sup>3</sup>.
- - The average density is 0.994 g/cm<sup>3</sup>
- - The average pH is 3.188 (for reference, the pH of pure distilled water is 7.0)
-
-### What is/are the main feature(s) of interest in your dataset?
-The main feature of interest is `quality`. Many of the other features contribute to either the pH or density of a given wine. Therefore it would be good to see how `pH` and `density` affect the quality.
-
-### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
-Other features where we see some divergence between low and high quality wines are `chlorides`, `total.sulfur.dioxide`, and `alcohol`, alongside the more general `pH` and `density` features.
-
-### Did you create any new variables from existing variables in the dataset?
-I've tried consolidating the `fixed.acidity`, `volatile.acidity`, and `citric.acid` into a new feature called `acids`, but so far I haven't seen any many differences between high and low quality wines with this feature.
-
-### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
-Although I had to log-transform or square root transform some of the plots, all except the `residual.sugar` and `alcohol` plots tend to look like normal distributions. The distribution of sugars appears bi-modal, perhaps even tri-modal, with a large peak at 1.5 g/dm<sup>3</sup> and two smaller peaks straddling the 10 g/dm<sup>3</sup> point. The histogram for alcohol content is right-skewed, with half of wines containing less than 10.4% alcohol. However, wines with quality rating greater than 6 have an alcohol distribution that is left-skewed, with half of wines containing more than 11.5% alcohol.
-
-
-# Bivariate Plots Section
 ```{r correlation coefficients}
-# remove the final column from wines and create correlation matrix
-wines <- wines[ -c(13)]
-round(cor(wines), 2)
+# remove the final column from wines (acids) and create correlation matrix
+wines$acids <- NULL
+round(cor(wines[, !(names(wines) %in% 
+                      c('high_low', 'quality_factors'))]), 2)
 ```
 
 To better illustrate the correlations between features, let's construct a heat map of the most correlated features.
@@ -389,14 +398,31 @@ m0 <- lm(data = wines,
 summary(m0)
 ```
 
-Residual sugar alone accounts for over 70% of the variance in the density. Similarly, alcohol content and total sulfur dioxide also affect the density of wines.
+```{r}
+par(mfrow = c(2,2))
+plot(m0)
+```
+
+Residual sugar alone accounts for over 70% of the variance in the density. Similarly, alcohol content and total sulfur dioxide also affect the density of wines. The Cook's distance plot shows that the outlier having the greatest influence on the model is wine 2782, which has a residual sugar content of 65.8 g/dm<sup>3</sup>. This wine also has the largest residual error.
+
+```{r linear model of density wrt sugar without outliers}
+m0_a <- lm(data = subset(wines, residual.sugar < 60),
+         formula = density ~ residual.sugar)
+summary(m0_a)
+
+par(mfrow = c(2,2))
+plot(m0_a)
+```
+
+Strangely, removing this outlier, while it improves the residual error somewhat, actually reduces the R<sup>2</sup> score.
 
 ```{r Features affecting density linearly}
-ggplot(data = wines, aes(alcohol, density)) + 
+ggplot(data = subset(wines, density < 1.01), 
+       aes(alcohol, density)) + 
   geom_jitter(alpha = 0.1, width = 0.04) + 
   geom_smooth(method = 'lm', color = 'red')
 
-ggplot(data = wines, 
+ggplot(data = subset(wines, density < 1.01), 
        aes(total.sulfur.dioxide, density)) + 
   geom_point(alpha = 0.1) + 
   geom_smooth(method = 'lm', color = 'red')
@@ -408,15 +434,18 @@ As we've seen before, the outliers are affected by the residual sugar in the win
 Now let us see what would affect the alcohol content. The three most strongly correlated features to `alcohol` are `residual.sugar`, `chlorides`, and `total.sulfur.dioxide`.
 
 ```{r Features affecting alcohol}
+# residual sugar
 ggplot(data = wines,
        aes(x = residual.sugar, y = alcohol)) + 
   geom_point(alpha = 0.05) + 
   scale_x_log10()
 
-ggplot(data = wines,
+# chlorides
+ggplot(data = subset(wines, chlorides < 0.1),
        aes(x = chlorides, y = alcohol)) + 
   geom_jitter(alpha = 0.05, height = 0.04)
 
+# total.sulfur.dioxide
 ggplot(data = wines,
        aes(x = total.sulfur.dioxide, y = alcohol)) + 
   geom_jitter(alpha = 0.05, height = 0.04) + 
@@ -453,15 +482,20 @@ here are strong linear relationships between `density`, `residual.sugar` and `al
 # Multivariate Plots Section
 
 ```{r density by sugar and alcohol}
-ggplot(data = subset(wines, density < 1.), 
-       aes(residual.sugar, density, color = alcohol)) + 
-  geom_point() + 
-  theme(panel.background = element_rect(fill = 'grey80'))
+multivar_scatter <- function(x, y, z, data = wines){
+  return(
+    ggplot(data = data, 
+           aes_string(x = x, y = y, color = z)) + 
+      geom_point() + 
+      theme(panel.background = element_rect(fill = 'grey80'))
+  )
+}
 
-ggplot(data = subset(wines, density < 1.),
-       aes(residual.sugar, density, color = alcohol)) + 
-  geom_point() + 
-  theme(panel.background = element_rect(fill = 'grey80')) +
+multivar_scatter('residual.sugar', 'density', 'alcohol',
+                 data = subset(wines, density < 1.))
+
+multivar_scatter('residual.sugar', 'density', 'alcohol',
+                 data = subset(wines, density < 1.)) + 
   facet_wrap(~quality_factors)
 ```
 
@@ -509,7 +543,7 @@ wines_ordered <- wines[order(wines$quality_factors), ]
 
 ggplot(data = subset(wines_ordered, density < 1.005), 
        aes(residual.sugar, density, color = quality_factors)) + 
-  geom_point(alpha = 1, size = 1.4) + 
+  geom_point(alpha = 0.5, size = 1.4) + 
   scale_color_manual(values = rev(brewer.pal(7,"PRGn")),
                      guide = guide_legend(reverse = T)) + 
   theme(panel.background = element_rect(fill = 'grey50'))
@@ -517,7 +551,7 @@ ggplot(data = subset(wines_ordered, density < 1.005),
   
 ggplot(data = subset(wines_ordered, density < 1.005), 
        aes(alcohol, density, color = quality_factors)) + 
-  geom_jitter(alpha = 1, size = 2, width = 0.02) + 
+  geom_jitter(alpha = 0.5, size = 2, width = 0.02) + 
   scale_color_manual(values = rev(brewer.pal(7,"PRGn")),
                      guide = guide_legend(reverse = T)) + 
   theme(panel.background = element_rect(fill = 'grey50'))
@@ -560,7 +594,7 @@ ggplot(data = wines, aes(alcohol)) +
 ```
 
 ### Description One
-This kernel density plot of alcohol distributions for low and high quality wines shows that highly rated wines tend to have more alcohol than low-rated wines.
+This kernel density plot of alcohol distributions for low and high quality wines shows that highly rated wines tend to have more alcohol than low-rated wines. The mean/median alcohol percentages for high and low quality wines are 11.42%/11.5% and 10.27%/10% respectively. The averages are 11.42% and 10.27%.
 
 ### Plot Two
 ```{r echo=FALSE, Plot_Two}
@@ -579,13 +613,13 @@ ggplot(data = subset(wines, density < 1.01),
 ```
 
 ### Description Two
-The highest rated wines (7-9) have the lowest densities. The spread of density data is wide for middle-rated wines (5-6), with large outliers (not pictured) for 6-rated wines due to abnormally high sugar content.
+Density and quality are fairly correlated, with a coefficient of -0.31. The highest rated wines (7-9) have the lowest densities. The spread of density data is wide for middle-rated wines (5-6), with large outliers (not pictured) for 6-rated wines due to abnormally high sugar content.
 
 ### Plot Three
 ```{r echo=FALSE, Plot_Three}
 ggplot(data = subset(wines_ordered, density < 1.005), 
        aes(alcohol, density, color = quality_factors)) + 
-  geom_jitter(alpha = 0.8, size = 1.7, width = 0.03) + 
+  geom_jitter(alpha = 0.4, size = 1.7, width = 0.03) + 
   scale_color_manual(values = rev(brewer.pal(7,"RdBu")),
                      guide = guide_legend(reverse = T),
                      name = 'Quality Rating') + 

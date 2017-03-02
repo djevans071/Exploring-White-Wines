@@ -24,3 +24,6 @@
     
 - subscript and superscript in ggplot labels:
     http://stackoverflow.com/questions/27445452/superscript-and-subscript-axis-labels-in-ggplot2
+    
+- residual plots of linear model
+    http://www.theanalysisfactor.com/linear-models-r-diagnosing-regression-model/
